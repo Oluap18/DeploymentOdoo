@@ -1,0 +1,33 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Instalar os pacotes necessários
+      apt:
+        name: "{{ item }}"
+      with_items: "{{ packages }}"
+    
+    - name: Download do arquivo do packetbeat
+      raw: curl -L -O https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-6.0.1-amd64.deb
+    
+    - name: Instalar o arquivo deb sacado
+      apt: deb=packetbeat-6.0.1-amd64.deb
+
+    - name: Modificar o ficheiro packetbeat.yml, na secção do elasticsearch
+      lineinfile:
+        path: /etc/packetbeat/packetbeat.yml
+        regexp: 'localhost:9200'
+        line: '  hosts: ["{{ ip }}:9200"]'
+
+    - name: Modificar o ficheiro packetbeat.yml, na secção do kibana
+      lineinfile:
+        path: /etc/packetbeat/packetbeat.yml
+        regexp: '#host: "localhost:5601"'
+        line: '  host: "{{ ip }}:5601"'
+
+    - name: Recomeçar o serviço packetbeat
+      service:
+        name: packetbeat
+        state: restarted
+  vars:
+    packages:
+      - libpcap0.8

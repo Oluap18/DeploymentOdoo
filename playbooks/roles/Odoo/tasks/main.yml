@@ -1,0 +1,30 @@
+- name: Instalar pacotes
+  apt:
+    name: "{{ item }}"
+  with_items: "{{ packages }}"
+
+- name: Instalar pacotes python
+  pip:
+    name: "{{ item }}"
+  with_items: "{{ pip }}"
+
+- name: Copiar a pasta odoo para o destino
+  copy:
+    src: ../odoo
+    dest: /
+
+- name: Modificar o ficheiro /home/ubuntu/odoo/entrypoint.sh para executável
+  raw: chmod +x /odoo/entrypoint.sh
+
+- name: Construir a imagem do odoo
+  docker_image:
+    path: /odoo
+    name: odoo
+
+- name: Correr o container com a imagem odoo
+  docker_container:
+    name: "{{ port }}"
+    image: odoo
+    state: started
+    ports:
+    - "{{ port }}:8069"

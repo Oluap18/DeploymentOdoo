@@ -1,0 +1,58 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Copiar e adicionar a chave publica
+      raw: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+
+    - name: Adicionar o repositório do java 8
+      action: apt_repository repo='ppa:webupd8team/java'
+
+    - name: Atualizar os pacotes
+      apt:
+        update_cache: yes
+
+    - name: Autoaccept license for Java
+      action: shell echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+    
+    - name: Instalar os pacotes
+      apt:
+        name: "{{ item }}"
+      with_items: "{{ packages }}"
+
+    - name: Adicionar o repositório do elasticsearch
+      raw: echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list 
+
+    - name: Atualizar os pacotes
+      apt:
+        update_cache: yes
+
+    - name: Instalar o elasticsearch e kibana
+      apt:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ services }}"
+    
+    - name: Modificar o ficheiro elasticsearch.yml
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '#network.host: 192.168.0.1'
+        line: "network.host: 0.0.0.0"
+
+    - name: Modificar o ficheiro kibana.yml
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: '#server.host: "localhost"'
+        line: "server.host: 0.0.0.0"
+
+    - name: Recomeçar o serviço kibana e elasticsearch
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items: "{{ services }}"
+  vars:
+    packages:
+      - apt-transport-https 
+      - oracle-java8-installer
+    services:
+      - elasticsearch
+      - kibana

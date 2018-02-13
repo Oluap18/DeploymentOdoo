@@ -1,0 +1,12 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Copiar para a configuração do HAProxy, o novo ip e porta do container
+      lineinfile:
+        dest: /etc/haproxy/haproxy.cfg 
+        line: server odoo {{ ip }}:{{ port }} cookie s1 check
+    - name: dar restart ao servico HAProxy
+      service:
+        name: haproxy
+        enabled: yes
+        state: restarted

@@ -1,0 +1,7 @@
+packages:
+  - postgresql
+  - python-psycopg2
+services:
+  - postgresql
+repository:
+  - deb http://apt.postgresql.org/pub/repos/apt/ wheezy-pgdg main

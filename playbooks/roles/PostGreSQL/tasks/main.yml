@@ -1,0 +1,31 @@
+- name: Instalar a base de dados PostgreSQL e outros pacotes
+  apt:
+    name: "{{ item }}"
+  with_items: "{{ packages }}"
+
+- name: Criar o utilizador "odoo", a sua password e os respetivos previlégios, através do user postgres
+  become_user: postgres
+  postgresql_user:
+    db: template1
+    name: odoo
+    password: odoo
+    role_attr_flags: CREATEDB
+
+- name: Modificar o ficheiro postgresql.conf para escutar em todos os hosts
+  lineinfile:
+    path: /etc/postgresql/9.5/main/postgresql.conf
+    regexp: '#listen_addresses ='
+    line: "listen_addresses = '*'"
+
+- name: Modificar o ficheiro pg_hba.conf para aceitar conexões locais de todos os ips
+  lineinfile:
+    path: /etc/postgresql/9.5/main/pg_hba.conf
+    regexp: 'host    all             all             127.0.0.1/32            md5'
+    line: 'host    all             all             0.0.0.0/0               md5'
+
+- name: Recomeçar o serviço PostgreSQL 
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: restarted
+  with_items: "{{ services }}"

@@ -1,0 +1,40 @@
+- name: Instalar pacotes
+  apt:
+    name: "{{ item }}"
+  with_items: "{{ packages }}"
+
+- name: Ativar o haproxy
+  lineinfile:
+    path: /etc/default/haproxy
+    line: "ENABLED=1"
+
+- name: Fazer um backup do ficheiro haproxy.cfg
+  raw: mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.original
+
+- name: Criar um novo ficheiro haproxy.cfg
+  raw: touch /etc/haproxy/haproxy.cfg
+
+- name: Escrever as novas configurações do haproxy
+  lineinfile:
+    dest: /etc/haproxy/haproxy.cfg 
+    line: "{{ item.line }}"
+  with_items:
+  - { line: 'listen odoo' }
+  - { line: 'bind *:8082' }
+  - { line: 'mode http' }
+  - { line: 'balance leastconn' }
+  - { line: 'option httpclose' }
+  - { line: 'option forwardfor' }
+  - { line: 'cookie SERVERNAME insert indirect nocache' }
+
+- name: remover o ficheiro admin.sock
+  file:
+    path: /run/haproxy/admin.sock
+    state: absent 
+
+- name: Recomeçar o serviço HAProxy
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: restarted
+  with_items: "{{ services }}"

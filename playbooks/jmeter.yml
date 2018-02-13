@@ -1,0 +1,12 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Download do arquivo tgz do jmeter
+      get_url:
+        url: http://mirrors.up.pt/pub/apache//jmeter/binaries/apache-jmeter-3.3.tgz
+        dest: ~/
+
+    - name: Extrair o arquivo tgz para a diretoria ~/
+      unarchive:
+        src: ~/apache-jmeter-3.3.tgz
+        dest: ~/

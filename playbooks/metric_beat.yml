@@ -1,0 +1,25 @@
+- hosts: all
+  become: yes
+  tasks:    
+    - name: Download do arquivo debian do metricbeat
+      raw: curl -L -O https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-6.0.1-amd64.deb
+    
+    - name: Instalar o ficheiro deb sacado
+      apt: deb=metricbeat-6.0.1-amd64.deb
+
+    - name: Modificar o ficheiro metricbeat.yml, na secção do elasticsearch
+      lineinfile:
+        path: /etc/metricbeat/metricbeat.yml
+        regexp: 'localhost:9200'
+        line: '  hosts: ["{{ ip }}:9200"]'
+
+    - name: Modificar o ficheiro metricbeat.yml, na secção do kibana
+      lineinfile:
+        path: /etc/metricbeat/metricbeat.yml
+        regexp: '#host: "localhost:5601"'
+        line: '  host: "{{ ip }}:5601"'
+
+    - name: Recomeçar o serviço metricbeat
+      service:
+        name: metricbeat
+        state: restarted
